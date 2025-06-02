@@ -1,0 +1,12 @@
+[workspace]
+authors = ["Mauro Silberberg <maurosilber@gmail.com>"]
+channels = ["https://prefix.dev/conda-forge"]
+name = "binlets-spectral"
+platforms = ["osx-arm64"]
+version = "0.1.0"
+
+[tasks]
+
+[dependencies]
+matplotlib = "*"
+numpy = "*"
