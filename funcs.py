@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 
 import numpy as np
 from numpy.typing import NDArray
-from scipy.stats import rv_continuous
+from scipy.stats import rv_frozen
 
 
 @dataclass
@@ -14,9 +14,9 @@ class BinnedRV:
     - `np.expand_dims(args, axis=-1)`
     """
 
-    rv: rv_continuous
-    bin_edges: NDArray
-    probability: NDArray = field(init=False)
+    rv: rv_frozen
+    bin_edges: NDArray[np.float_]
+    probability: NDArray[np.float64] = field(init=False)
 
     def __post_init__(self):
         prob = np.diff(self.rv.cdf(self.bin_edges))
@@ -28,7 +28,8 @@ class BinnedRV:
         return self.bin_edges[:-1] + bin_width / 2
 
 
-def binned_fourier(y, /, *, n: int):
+def binned_fourier(y: NDArray, /, *, n: int | NDArray[np.int_]):
+    """The n-th fourier coefficient, calculated along the last axis of y."""
     t = np.linspace(0, 2 * np.pi, y.shape[-1], endpoint=False)
     return (y * np.exp(1j * n * t)).sum(axis=-1)
 
@@ -67,6 +68,9 @@ def phasor_covariance(N_bins, R0, R1, R2, a0, a1):
 
 
 if __name__ == "__main__":
+    # Example comparing the expected phasor covariance
+    # and the empiric covariance from a random sample.
+
     import numpy as np
     import scipy.stats
     import funcs
@@ -90,7 +94,12 @@ if __name__ == "__main__":
     R = funcs.binned_fourier(hist, n=np.arange(3)[:, None, None])
 
     r = R[1] / R[0]
+
+    # Covariance from samples
     r_ecov = np.cov(r.real, r.imag)
+
+    # Expected covariance
     r_cov = funcs.phasor_covariance(mean.size, *R.mean(axis=-1), *a)
 
+    print("Ratio of expected vs sampled covariance:")
     print(r_ecov / r_cov)
